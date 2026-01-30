@@ -1,0 +1,21 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 3000,
+    "description": "服务器配置"
+  },
+  "game": {
+    "maxTargets": 8,
+    "targetSpawnInterval": 2000,
+    "targetUpdateRate": 30,
+    "leaderboardSize": 10,
+    "description": "游戏配置"
+  },
+  "user": {
+    "usernameMinLength": 2,
+    "usernameMaxLength": 20,
+    "passwordMinLength": 4,
+    "passwordMaxLength": 16,
+    "description": "用户配置"
+  }
+}

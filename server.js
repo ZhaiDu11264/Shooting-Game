@@ -2,6 +2,25 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
+const fs = require('fs');
+
+// 加载环境变量
+require('dotenv').config();
+
+// 加载配置文件
+let config = {
+  server: { host: '0.0.0.0', port: 3000 },
+  game: { maxTargets: 8, targetSpawnInterval: 2000, targetUpdateRate: 30, leaderboardSize: 10 },
+  user: { usernameMinLength: 2, usernameMaxLength: 20, passwordMinLength: 4, passwordMaxLength: 16 }
+};
+
+try {
+  const configFile = fs.readFileSync('config.json', 'utf8');
+  config = { ...config, ...JSON.parse(configFile) };
+  console.log('✅ 配置文件加载成功');
+} catch (error) {
+  console.log('⚠️  配置文件不存在或格式错误，使用默认配置');
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -18,12 +37,12 @@ app.post('/api/register', (req, res) => {
     return res.json({ success: false, message: '用户名和密码不能为空' });
   }
   
-  if (username.length < 2 || username.length > 20) {
-    return res.json({ success: false, message: '用户名长度应在2-20个字符之间' });
+  if (username.length < config.user.usernameMinLength || username.length > config.user.usernameMaxLength) {
+    return res.json({ success: false, message: `用户名长度应在${config.user.usernameMinLength}-${config.user.usernameMaxLength}个字符之间` });
   }
   
-  if (password.length < 4 || password.length > 16) {
-    return res.json({ success: false, message: '密码长度应在4-16个字符之间' });
+  if (password.length < config.user.passwordMinLength || password.length > config.user.passwordMaxLength) {
+    return res.json({ success: false, message: `密码长度应在${config.user.passwordMinLength}-${config.user.passwordMaxLength}个字符之间` });
   }
   
   if (users.has(username)) {
@@ -87,10 +106,10 @@ function initTargets() {
   }
   // 定期生成新目标
   setInterval(() => {
-    if (targets.length < 8) {
+    if (targets.length < config.game.maxTargets) {
       spawnTarget();
     }
-  }, 2000);
+  }, config.game.targetSpawnInterval);
 }
 
 function spawnTarget() {
@@ -126,7 +145,7 @@ function updateTargets() {
 setInterval(() => {
   updateTargets();
   broadcast({ type: 'updateTargets', targets });
-}, 1000 / 30); // 30 FPS
+}, 1000 / config.game.targetUpdateRate); // 可配置的更新频率
 
 initTargets();
 
@@ -219,7 +238,7 @@ function updateLeaderboard(username, score) {
   }
   
   leaderboard.sort((a, b) => b.score - a.score);
-  leaderboard.splice(10); // 只保留前10名
+  leaderboard.splice(config.game.leaderboardSize); // 可配置的排行榜大小
 }
 
 function broadcast(data) {
@@ -235,25 +254,41 @@ function broadcastLeaderboard() {
   broadcast({ type: 'leaderboard', data: leaderboard });
 }
 
-const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0'; // 监听所有网络接口
+const PORT = process.env.PORT || config.server.port;
+const HOST = process.env.HOST || config.server.host;
 
 server.listen(PORT, HOST, () => {
   const os = require('os');
   const interfaces = os.networkInterfaces();
   
   console.log('\n🎮 射击游戏服务器已启动！\n');
+  console.log('服务器配置：');
+  console.log(`  主机: ${HOST}`);
+  console.log(`  端口: ${PORT}\n`);
+  
   console.log('可通过以下地址访问：');
-  console.log(`  本地: http://localhost:${PORT}`);
   
-  // 显示所有可用的局域网IP
-  Object.keys(interfaces).forEach(name => {
-    interfaces[name].forEach(iface => {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        console.log(`  局域网: http://${iface.address}:${PORT}`);
-      }
+  // 如果监听所有接口，显示本地和局域网地址
+  if (HOST === '0.0.0.0') {
+    console.log(`  本地: http://localhost:${PORT}`);
+    console.log(`  本地: http://127.0.0.1:${PORT}`);
+    
+    // 显示所有可用的局域网IP
+    Object.keys(interfaces).forEach(name => {
+      interfaces[name].forEach(iface => {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          console.log(`  局域网: http://${iface.address}:${PORT}`);
+        }
+      });
     });
-  });
+  } else {
+    // 如果指定了特定IP，只显示该IP
+    console.log(`  指定地址: http://${HOST}:${PORT}`);
+  }
   
+  console.log('\n💡 配置提示：');
+  console.log('  设置端口: PORT=8080 npm start');
+  console.log('  设置主机: HOST=192.168.1.100 npm start');
+  console.log('  同时设置: HOST=192.168.1.100 PORT=8080 npm start');
   console.log('\n按 Ctrl+C 停止服务器\n');
 });
