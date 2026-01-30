@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>射击游戏</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <div class="header">
+      <div class="player-info">
+        <span id="playerName"></span>
+        <span class="score">得分: <span id="score">0</span></span>
+        <span id="gameTime">时间: 00:00</span>
+      </div>
+      <div class="game-controls">
+        <button id="endGameBtn">结束游戏</button>
+        <button id="backBtn">返回登录</button>
+      </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    <div class="leaderboard">
+      <h3>🏆 实时排行榜</h3>
+      <div class="leaderboard-refresh">
+        <span id="refreshIndicator">●</span>
+        <span>实时更新</span>
+      </div>
+      <ol id="leaderboardList"></ol>
+    </div>
+    
+    <!-- 游戏结束弹窗 -->
+    <div id="gameEndModal" class="modal hidden">
+      <div class="modal-content">
+        <h2>🎉 游戏结束</h2>
+        <div class="game-stats">
+          <p>本局得分: <span id="finalScore">0</span></p>
+          <p>游戏时长: <span id="finalTime">00:00</span></p>
+          <p>击中目标: <span id="targetsHit">0</span></p>
+          <p>排名: <span id="finalRank">-</span></p>
+        </div>
+        <div class="modal-buttons">
+          <button id="playAgainBtn">再玩一局</button>
+          <button id="backToLoginBtn">返回登录</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
