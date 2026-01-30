@@ -266,29 +266,35 @@ server.listen(PORT, HOST, () => {
   console.log(`  主机: ${HOST}`);
   console.log(`  端口: ${PORT}\n`);
   
-  console.log('可通过以下地址访问：');
+  console.log('访问地址：');
   
-  // 如果监听所有接口，显示本地和局域网地址
+  // 如果监听所有接口，显示本地和一个主要的局域网地址
   if (HOST === '0.0.0.0') {
-    console.log(`  本地: http://localhost:${PORT}`);
-    console.log(`  本地: http://127.0.0.1:${PORT}`);
+    console.log(`  本地访问: http://localhost:${PORT}`);
     
-    // 显示所有可用的局域网IP
+    // 只显示一个主要的局域网IP（通常是以太网或WiFi）
+    let mainIP = null;
     Object.keys(interfaces).forEach(name => {
       interfaces[name].forEach(iface => {
         if (iface.family === 'IPv4' && !iface.internal) {
-          console.log(`  局域网: http://${iface.address}:${PORT}`);
+          // 优先选择以太网或WiFi接口
+          if (!mainIP || name.toLowerCase().includes('ethernet') || name.toLowerCase().includes('wi-fi') || name.toLowerCase().includes('wlan')) {
+            mainIP = iface.address;
+          }
         }
       });
     });
+    
+    if (mainIP) {
+      console.log(`  局域网访问: http://${mainIP}:${PORT}`);
+    }
   } else {
     // 如果指定了特定IP，只显示该IP
-    console.log(`  指定地址: http://${HOST}:${PORT}`);
+    console.log(`  访问地址: http://${HOST}:${PORT}`);
   }
   
   console.log('\n💡 配置提示：');
-  console.log('  设置端口: PORT=8080 npm start');
-  console.log('  设置主机: HOST=192.168.1.100 npm start');
-  console.log('  同时设置: HOST=192.168.1.100 PORT=8080 npm start');
+  console.log('  修改端口: PORT=8080 npm start');
+  console.log('  指定IP: HOST=192.168.1.100 npm start');
   console.log('\n按 Ctrl+C 停止服务器\n');
 });
